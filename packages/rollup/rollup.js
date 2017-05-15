@@ -43,14 +43,14 @@ module.exports = function(opts) {
             }
 
             // Add the file & its dependencies
-            return processor.string(id, code).then(function(result) {
+            return processor.string(id, code).then((result) => {
                 var classes = output.join(result.exports),
                     imports = processor.dependencies(id)
                         .map((file) => `import "${file.replace(/\\/g, "/")}";`)
                         .join("\n");
                 
                 return {
-                    code : (imports.length ? `${imports}\n` : "") + Object.keys(classes).reduce(function(prev, curr) {
+                    code : (imports.length ? `${imports}\n` : "") + Object.keys(classes).reduce((prev, curr) => {
                         // Warn if any of the exported CSS wasn't able to be used as a valid JS identifier
                         if(keyword.isReservedWordES6(curr) || !keyword.isIdentifierNameES6(curr)) {
                             options.onwarn(`Invalid JS identifier "${curr}", unable to export`);
@@ -84,17 +84,28 @@ module.exports = function(opts) {
         },
 
         onwrite : function(bundle, result) {
-            result.css.then(function(data) {
+            result.css.then((data) => {
                 if(options.css) {
                     mkdirp.sync(path.dirname(options.css));
+                    
                     fs.writeFileSync(
                         options.css,
                         data.css
                     );
                 }
+
+                if(options.css && data.map) {
+                    mkdirp.sync(path.dirname(options.css));
+
+                    fs.writeFileSync(
+                        `${options.css}.map`,
+                        data.map.toString()
+                    );
+                }
                 
                 if(options.json) {
                     mkdirp.sync(path.dirname(options.json));
+                    
                     fs.writeFileSync(
                         options.json,
                         JSON.stringify(data.compositions, null, 4)
